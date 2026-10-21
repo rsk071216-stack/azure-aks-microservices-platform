@@ -82,7 +82,8 @@ jobs:
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/azure-samples/aks-store-demo/${{ matrix.service }}:latest
+          # Keep in sync with the tags in k8s/base/kustomization.yaml
+          image-ref: ghcr.io/azure-samples/aks-store-demo/${{ matrix.service }}:2.2.0
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "0"

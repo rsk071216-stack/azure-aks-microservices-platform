@@ -7,6 +7,15 @@ resources:
   - product-service.yaml
   - store-front.yaml
 
+# Single place to bump the application version
+images:
+  - name: ghcr.io/azure-samples/aks-store-demo/order-service
+    newTag: "2.2.0"
+  - name: ghcr.io/azure-samples/aks-store-demo/product-service
+    newTag: "2.2.0"
+  - name: ghcr.io/azure-samples/aks-store-demo/store-front
+    newTag: "2.2.0"
+
 labels:
   - pairs:
       app.kubernetes.io/part-of: aks-store

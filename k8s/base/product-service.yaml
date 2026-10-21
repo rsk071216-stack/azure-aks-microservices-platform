@@ -14,10 +14,14 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: ghcr.io/azure-samples/aks-store-demo/product-service:latest
+          image: ghcr.io/azure-samples/aks-store-demo/product-service
           ports:
             - name: http
               containerPort: 3002
+          env:
+            # Optional AI service; not deployed in this project
+            - name: AI_SERVICE_URL
+              value: "http://ai-service:5001/"
           resources:
             requests:
               cpu: 1m
@@ -26,15 +30,17 @@ spec:
               cpu: 100m
               memory: 64Mi
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
               port: http
             initialDelaySeconds: 3
             periodSeconds: 10
-          livenessProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: 10
-            periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
