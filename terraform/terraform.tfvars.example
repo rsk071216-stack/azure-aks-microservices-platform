@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and adjust.
+project     = "shopdemo"
+environment = "dev"
+location    = "centralindia"
+
+node_vm_size   = "Standard_B2s"
+node_min_count = 1
+node_max_count = 2
+
+tags = {
+  owner = "your-name"
+}

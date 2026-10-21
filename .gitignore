@@ -1,0 +1,22 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+terraform.tfvars
+backend.hcl
+
+# Secrets
+k8s/base/rabbitmq.env
+*.env
+!*.env.example
+
+# Rendered manifests
+rendered/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

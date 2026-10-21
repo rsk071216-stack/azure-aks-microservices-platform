@@ -1,0 +1,5 @@
+# Copy to backend.hcl after running scripts/bootstrap-tfstate.sh
+resource_group_name  = "rg-tfstate"
+storage_account_name = "sttfstateXXXXX"
+container_name       = "tfstate"
+key                  = "shopdemo-dev.tfstate"

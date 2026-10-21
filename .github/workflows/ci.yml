@@ -1,0 +1,122 @@
+# Runs on every push / PR. Free on public repos, needs no Azure account.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform validate & scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+
+      - name: Init (no backend)
+        run: terraform init -backend=false
+
+      - name: Validate
+        run: terraform validate
+
+      - name: Checkov security scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          framework: terraform
+          soft_fail: true
+
+  kubernetes:
+    name: Kubernetes manifests validate & scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create demo secret file
+        run: cp k8s/base/rabbitmq.env.example k8s/base/rabbitmq.env
+
+      - name: Render overlays
+        run: |
+          mkdir -p rendered
+          for env in dev prod; do
+            kubectl kustomize k8s/overlays/$env > rendered/$env.yaml
+          done
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Schema validation
+        run: kubeconform -strict -summary rendered/*.yaml
+
+      - name: Trivy misconfiguration scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: rendered
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+
+  image-scan:
+    name: Image vulnerability scan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [order-service, product-service, store-front]
+    steps:
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/azure-samples/aks-store-demo/${{ matrix.service }}:latest
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
+
+  smoke-test:
+    name: Deploy to kind & smoke test
+    needs: kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create demo secret file
+        run: cp k8s/base/rabbitmq.env.example k8s/base/rabbitmq.env
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+
+      - name: Deploy dev overlay
+        run: kubectl apply -k k8s/overlays/dev
+
+      - name: Wait for rollout
+        run: |
+          kubectl -n store-dev rollout status statefulset/rabbitmq --timeout=300s
+          kubectl -n store-dev wait --for=condition=Available deployment --all --timeout=300s
+
+      - name: Smoke test store-front
+        run: |
+          kubectl -n store-dev port-forward svc/store-front 8080:80 &
+          sleep 5
+          curl -fsS http://localhost:8080 | head -n 20
+
+      - name: Debug info on failure
+        if: failure()
+        run: |
+          kubectl get pods -A -o wide
+          kubectl -n store-dev describe pods
+          kubectl -n store-dev logs --all-containers --prefix -l app.kubernetes.io/part-of=aks-store --tail=50 || true
