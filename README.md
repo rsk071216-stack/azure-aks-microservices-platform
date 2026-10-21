@@ -1,5 +1,10 @@
 # Azure AKS Microservices Platform
 
+[![CI](https://github.com/rsk071216-stack/azure-aks-microservices-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/rsk071216-stack/azure-aks-microservices-platform/actions/workflows/ci.yml)
+![Terraform](https://img.shields.io/badge/Terraform-azurerm%204.x-7B42BC?logo=terraform)
+![AKS](https://img.shields.io/badge/Azure-AKS-0078D4?logo=microsoftazure)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Kustomize-326CE5?logo=kubernetes)
+
 Production-style platform for running a microservices application on **Azure Kubernetes Service**:
 infrastructure as code, CI/CD pipelines with security scanning, environment overlays, autoscaling,
 and passwordless (OIDC) deployments from GitHub Actions.
