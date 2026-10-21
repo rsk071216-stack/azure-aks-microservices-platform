@@ -64,7 +64,7 @@ jobs:
         run: kubeconform -strict -summary rendered/*.yaml
 
       - name: Trivy misconfiguration scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config
           scan-ref: rendered
@@ -80,7 +80,7 @@ jobs:
         service: [order-service, product-service, store-front]
     steps:
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/azure-samples/aks-store-demo/${{ matrix.service }}:latest
           severity: HIGH,CRITICAL
